@@ -7,6 +7,13 @@ class Acq_Mode(Enum):
     SEQUENCE = True
     pass
 
+class Source_Type(Enum):
+    CH = 'CH'
+    MATH = 'MATH'
+    REF = 'REF'
+    ALL = 'ALL'
+    pass
+
 class TekMSO_Error(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -171,6 +178,47 @@ class TekMSO(object):
 
     
     # Save and Recall Command Group
+    def reset_setup(self):
+        """Reset the setup configuration"""
+        self.set(LOAD_SETUP, FACTORY_SETUP)
+        return
+        
+    def load_setup(self, filename, path=''):
+        """Load a setup configuration file"""
+        if path == '' or path[0] == '/':
+            path = path[1:].replace('/', '\\')
+            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'Setups', path])
+            pass
+        if filename[-4:] != '.set':
+            filename += '.set'
+            pass
+        self.set(LOAD_SETUP, '\\'.join([path, filename]), dbg=True)
+        return
+    
+    def save_setup(self, filename, path=''):
+        """Save the current setup"""
+        if path == '' or path[0] == '/':
+            path = path[1:].replace('/', '\\')
+            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'Setups', path])
+            pass
+        if filename[-4:] != '.set':
+            filename += '.set'
+            pass
+        self.set(SAVE_SETUP, '\\'.join([path, filename]))
+        return
+
+    def enable_save_setup_includerefs(self):
+        """Enable including reference waveforms when saving setup"""
+        self.set(SAVE_SETUP_INCLUDEREFS, ON)
+        return
+    
+    def disable_save_setup_includerefs(self):
+        """Disable including reference waveforms when saving setup"""
+        self.set(SAVE_SETUP_INCLUDEREFS, OFF)
+        return
+    
+    
+    # SaveOn Command Group
     def enable_save_on_trigger(self):
         """Enable SaveOn Trigger mode"""
         self.set(SAVEON_TRIGGER, ON)
@@ -182,17 +230,58 @@ class TekMSO(object):
         return
 
     def get_save_on_trigger_mode(self):
-        return self.get(SAVEON_TRIGGER)
+        """Return whether SaveOn is enabled or not"""
+        return (self.get(SAVEON_TRIGGER) == '1')
+
+    def get_save_on_trigger_file_path(self):
+        """Returns the path files are saved to when SaveOn is enabled"""
+        return self.get(SAVEON_TRIGGER_FILE_PATH)
+
+    def set_save_on_trigger_file_path(self, path):
+        """Set the path to save files to when SaveOn is enabled"""
+        if path[0] == '/':
+            path = path[1:].replace('/', '\\')
+            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'SaveOn', path])
+            pass
+        self.set(SAVEON_TRIGGER_FILE_PATH, path)
+        return
+
+    def get_save_on_trigger_file_name(self):
+        """Returns the filename of files saved due to SaveOn trigger events"""
+        return self.get(SAVEON_TRIGGER_FILE_NAME)
+
+    def set_save_on_trigger_file_name(self, filename):
+        """Set the filename of files saved due to SaveOn trigger events"""
+        self.set(SAVEON_TRIGGER_FILE_NAME, filename)
+        return
 
     def enable_save_waveform_on_trigger(self):
+        """Enable Waveform saving on trigger"""
         self.get(SAVE_WAVEFORM_ON_TRIGGER, ON)
         return
 
     def disable_save_waveform_on_trigger(self):
+        """Disable Waveform saving on trigger"""
         self.get(SAVE_WAVEFORM_ON_TRIGGER, OFF)
         return
 
     def isset_save_waveform_on_trigger(self):
+        """Return whether Waveforms are saved on trigger"""
         return self.get(SAVE_WAVEFORM_ON_TRIGGER)
+
+    def get_save_on_trigger_waveform_source(self):
+        """Get the source of the waveform saved on trigger"""
+        return self.get(SAVEON_TRIGGER_WAVEFORM_SOURCE)
+
+    def set_save_on_trigger_waveform_source(self, src_type, src_idx):
+        """Set the source of the waveform saved on trigger"""
+        if src_type == Source_Type.ALL:
+            self.set(SAVEON_TRIGGER_WAVEFORM_SOURCE, str(src_type))
+            pass
+        else:
+            self.set(SAVEON_TRIGGER_WAVEFORM_SOURCE, ''.join([str(src_type),str(int(src_idx))]))
+            pass
+        return
+    
     
     pass # End MSO6 Class
