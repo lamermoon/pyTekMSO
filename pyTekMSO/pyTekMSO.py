@@ -260,20 +260,20 @@ class TekMSO(object):
         self.set(LOAD_SETUP, FACTORY_SETUP)
         return
         
-    def load_setup(self, filename, path):
+    def load_setup(self, path):
         """Load a setup configuration file"""
-        if filename[-4:] != '.set':
-            filename += '.set'
+        if path[-4:] != '.set':
+            path += '.set'
             pass
         path = self._check_and_fix_qstring(path) 
         self.set(LOAD_SETUP, path, dbg=True)
         return
     
 
-    def save_setup(self, filename, path):
+    def save_setup(self, path):
         """Save the current setup"""
-        if filename[-4:] != '.set':
-            filename += '.set'
+        if path[-4:] != '.set':
+            path += '.set'
             pass
         path = self._check_and_fix_qstring(path)
         self.set(SAVE_SETUP, path)
