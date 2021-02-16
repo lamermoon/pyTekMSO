@@ -58,6 +58,13 @@ class TekMSO(object):
             pass
         return self._inst.write(cmd)
 
+    #adds literal quotes at start and end of plainStr if they are not there yet, see qstring format in manual
+    def _check_and_fix_qstring(self,plainStr):
+        if plainStr[0] != "\"":
+            plainStr = "\""+plainStr
+        if plainStr[len(plainStr)-1] != "\"":
+            plainStr = plainStr + "\""
+        return plainStr
     
     # General query    
     def get(self, attr, dbg=False):
@@ -71,7 +78,65 @@ class TekMSO(object):
     ## Methods ordered by groups ##
     ###############################
 
+    #Filesystem Command Group
+
+    def set_mkdir(self,path):
+        """Creates directory, no error check"""
+        path = self._check_and_fix_qstring(path)
+        self.set('FILESystem:MKDir',path)
+        return 
+
+    def set_cwd(self,path):
+        """Sets current working directory"""
+        path = self._check_and_fix_qstring(path)
+        self.set('FILESystem:CWD', path)
+        return
+    
+    def get_cwd(self):
+        """Returns current working directory"""
+        return self.get('FILESystem:CWD')
+    
+    def get_ldir(self):
+        """List content of current working directory. Empty dir returns literal \"\", not empty string"""
+        return self.get('FILESystem:LDIR')
+
+    # Sync commands
+
+    def get_busy(self):
+        return int(self.get('BUSY'))
+
+    def set_cls(self):
+        self.set('*CLS','')
+        return
+
+    def setup_opc(self):
+        """Enables operation complete message"""
+        self.set('DESE','1')
+        self.set('*ESE', '1')
+        self.set('*SRE 0','1')
+        return
+
+    def get_trigger_state(self):
+        """get trigger state, returns strings"""
+        return self.get('TRIGger:STATE')
+
+    def set_opc(self):
+        """Request generation of operation complete message once all async ops are done"""
+        self._write('*OPC')
+        return
+
+    def get_esr(self):
+        """query esr register, usefull for busy wait on operation complete message"""
+        return int(self._inst.query('*ESR?'))
+
+
     # Acquisition Command Group
+
+
+    def get_acq_seq_current(self):
+        """Get num of aquisitions in measurement"""
+        return int(self.get('ACQuire:SEQuence:CURrent'))
+
     def get_acq_state(self):
         """Get acquisition state"""
         return int(self.get(ACQ_STATE))
@@ -122,6 +187,15 @@ class TekMSO(object):
 
 
     # Horizontal Command Group
+
+    def get_horizontal_samplerate(self):
+        """Get Samplerate"""
+        return self.get('HORizontal:MODE:SAMPLERate')
+
+    def get_horizontal_length(self):
+        """Get length of trace"""
+        return self.get('HORizontal:MODE:RECOrdlength')
+
     def enable_fastframe(self):
         """Enable FastFrame mode"""
         self.set(FASTFRAME_STATE, ON)
@@ -149,6 +223,9 @@ class TekMSO(object):
         """Set FastFrame count to max possible value"""
         self.set_fastframe_count(self.get_fastframe_count_max())
         return
+
+    def get_horizontal(self):
+        return self.get('HORizontal')
 
 
     # Miscellaneous Command Group
@@ -183,28 +260,23 @@ class TekMSO(object):
         self.set(LOAD_SETUP, FACTORY_SETUP)
         return
         
-    def load_setup(self, filename, path=''):
+    def load_setup(self, filename, path):
         """Load a setup configuration file"""
-        if path == '' or path[0] == '/':
-            path = path[1:].replace('/', '\\')
-            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'Setups', path])
-            pass
         if filename[-4:] != '.set':
             filename += '.set'
             pass
-        self.set(LOAD_SETUP, '\\'.join([path, filename]), dbg=True)
+        path = self._check_and_fix_qstring(path) 
+        self.set(LOAD_SETUP, path, dbg=True)
         return
     
-    def save_setup(self, filename, path=''):
+
+    def save_setup(self, filename, path):
         """Save the current setup"""
-        if path == '' or path[0] == '/':
-            path = path[1:].replace('/', '\\')
-            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'Setups', path])
-            pass
         if filename[-4:] != '.set':
             filename += '.set'
             pass
-        self.set(SAVE_SETUP, '\\'.join([path, filename]))
+        path = self._check_and_fix_qstring(path)
+        self.set(SAVE_SETUP, path)
         return
 
     def enable_save_setup_includerefs(self):
@@ -238,13 +310,11 @@ class TekMSO(object):
         return self.get(SAVEON_TRIGGER_FILE_PATH)
 
     def set_save_on_trigger_file_path(self, path):
-        """Set the path to save files to when SaveOn is enabled"""
-        if path[0] == '/':
-            path = path[1:].replace('/', '\\')
-            path = '\\'.join([TEK_HOME_FOLDER_PATH, 'SaveOn', path])
-            pass
-        self.set(SAVEON_TRIGGER_FILE_PATH, path)
+        """Set the absolute path to save files to when SaveOn is enabled"""
+        path = self._check_and_fix_qstring(path)
+        self.set('SAVEON:FILE:DEST', path)
         return
+
 
     def get_save_on_trigger_file_name(self):
         """Returns the filename of files saved due to SaveOn trigger events"""
@@ -269,7 +339,7 @@ class TekMSO(object):
         """Return whether Waveforms are saved on trigger"""
         return self.get(SAVE_WAVEFORM_ON_TRIGGER)
 
-    def get_save_on_trigger_waveform_source(self):
+    def get_save_on_trigger_set_save_on_trigger_file_pathwaveform_source(self):
         """Get the source of the waveform saved on trigger"""
         return self.get(SAVEON_TRIGGER_WAVEFORM_SOURCE)
 

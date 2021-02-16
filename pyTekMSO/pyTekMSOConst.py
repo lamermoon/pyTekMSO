@@ -20,7 +20,6 @@ FASTFRAME_COUNT_MAX = ':HORizontal:FASTframe:MAXFRames'
 HEADER = ':HEADer'
 
 #Save and Recall
-TEK_HOME_FOLDER_PATH = 'C:\\Users\\Tek_Local_Admin\\Tektronix\\TekScope'
 LOAD_SETUP = ':RECAll:SETUp'
 FACTORY_SETUP = 'FACtory'
 SAVE_SETUP = ':SAVe:SETUp'
