@@ -95,10 +95,6 @@ if len(os.listdir(standardPathPC+measurementFolder)) != 0:
 
 #configur scope
 scope.disable_header() #controls whether query results are prefixed with command header
-scope.enable_fastframe()
-scope.set_fastframe_count(nframes) #set measurements/triggers per fast frame
-scope.enable_save_on_trigger()
-scope.enable_acq_mode_sequence()
 scope.setup_opc()
 scope.set_save_on_trigger_file_path(standardPathScope+measurementFolder)
 print('Setting save path to', scope.get_save_on_trigger_file_path())
@@ -135,6 +131,10 @@ while acq < ACQ_N :
 		print('Save Location:'+scope.get_save_on_trigger_file_path())
 		print('File Name:' + scope.get_save_on_trigger_file_name())
 
+		scope.enable_fastframe()
+		scope.set_fastframe_count(nframes) #set measurements/triggers per fast frame
+		scope.enable_save_on_trigger()
+		scope.enable_acq_mode_sequence()
 		scope.start_acq()
 		scope.set_opc()
 	
