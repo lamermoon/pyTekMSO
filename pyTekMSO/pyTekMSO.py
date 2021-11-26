@@ -1,4 +1,4 @@
-import visa
+import pyvisa as visa
 from enum import Enum
 from pyTekMSO.pyTekMSOConst import *
 
